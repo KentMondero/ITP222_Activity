@@ -26,13 +26,7 @@ if menu == "Home":
     This application helps users manage, organize, 
     and track tasks in a simple dashboard.
     """)
-
-    st.success("Use the sidebar to start managing your tasks.")
-
-    st.metric("Tasks Completed Today", "5", "+1")
-
-    st.info("Tip: Break large tasks into smaller tasks to stay productive.")
-
+    
 elif menu == "Add Task":
     st.title("Add New Task")
     with st.form("task_form"):
@@ -136,6 +130,10 @@ elif menu == "Dashboard":
 
         st.subheader("Completion Progress")
         st.progress(progress)
+
+        st.metric("Tasks Completed Today", "5", "+1")
+
+        st.info("Tip: Break large tasks into smaller tasks to stay productive.")
 
     else:
         st.warning("No tasks added yet.")
