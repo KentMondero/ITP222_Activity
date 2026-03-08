@@ -1,114 +1,195 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
-import time
+import datetime
 
-st.set_page_config(page_title="Streamlit Elements Demo", layout="centered")
+st.set_page_config(page_title="Jas Do It", layout="wide")
 
-# Sidebar menu
-menu = st.sidebar.selectbox(
-    "Navigation",
-    ["Home", "Text & Markdown", "Inputs", "Buttons", "Data Display", "Charts", "About"]
+if "tasks" not in st.session_state:
+    st.session_state.tasks = []
+
+st.sidebar.image("images/JasDoIt.png", width=70)  
+
+menu = st.sidebar.selectbox( 
+    "",
+    ["Home", "Add Task", "Dashboard", "Feedback", "About"]
 )
 
-# ---------------- HOME ----------------
+
 if menu == "Home":
-    st.title("Streamlit Elements Demo App")
-    st.write("Welcome! This app showcases different Streamlit elements using the Streamlit API Reference.")
-    st.image("https://streamlit.io/images/brand/streamlit-mark-color.png", width=200)
-    st.success("Use the sidebar to explore different Streamlit components.")
+    st.image("images/JasDoIt.png", width=100)
+    st.title("Jas Do It ✔")
+    st.header("When You Type Tasks, We Organize")
 
-# ---------------- TEXT & MARKDOWN ----------------
-elif menu == "Text & Markdown":
-    st.header("Text & Markdown")
-    st.text("This is st.text()")
-    st.write("This is st.write()")
-    st.markdown("**This is bold text using Markdown**")
-    st.markdown("*This is italic text*")
-    st.markdown("### This is a subheading")
-    st.code("print('Hello Streamlit')", language="python")
+    st.image("images/managingTask.png", width=300)
 
-# ---------------- INPUTS ----------------
-elif menu == "Inputs":
-    st.header("Input Widgets")
+    st.write("""
+    This application helps users manage, organize, 
+    and track tasks in a simple dashboard.
+    """)
 
-    name = st.text_input("Enter your name:")
-    age = st.number_input("Enter your age:", min_value=0, max_value=120)
-    agree = st.checkbox("I agree")
-    gender = st.radio("Select gender:", ["Male", "Female", "Other"])
-    hobby = st.selectbox("Choose a hobby:", ["Reading", "Sports", "Gaming", "Music"])
-    level = st.slider("Select level:", 1, 10)
+    st.success("Use the sidebar to start managing your tasks.")
 
-    if name:
-        st.write(f"Hello, {name}!")
-    st.write("Age:", age)
-    st.write("Agreement:", agree)
-    st.write("Gender:", gender)
-    st.write("Hobby:", hobby)
-    st.write("Level:", level)
+    st.metric("Tasks Completed Today", "5", "+1")
 
-# ---------------- BUTTONS ----------------
-elif menu == "Buttons":
-    st.header("Buttons & Status")
+    st.info("Tip: Break large tasks into smaller tasks to stay productive.")
 
-    if st.button("Click me"):
-        st.success("Button clicked!")
+elif menu == "Add Task":
+    st.title("Add New Task")
+    with st.form("task_form"):
 
-    with st.spinner("Loading..."):
-        time.sleep(1)
+        task_name = st.text_input("Task Name")
 
-    st.progress(70)
-    st.toast("This is a toast notification!")
+        priority = st.selectbox(
+            "Priority Level",
+            ["Low", "Medium", "High"]
+        )
 
-# ---------------- DATA DISPLAY ----------------
-elif menu == "Data Display":
-    st.header("Data Display")
+        category = st.selectbox(
+            "Category",
+            ["School", "Work", "Personal", "Other"]
+        )
 
-    df = pd.DataFrame({
-        "Name": ["Ana", "Ben", "Cara", "Dan"],
-        "Score": [85, 90, 78, 92]
-    })
+        deadline = st.date_input(
+            "Deadline",
+            datetime.date.today()
+        )
 
-    st.write("DataFrame using st.dataframe():")
-    st.dataframe(df)
+        description = st.text_area("Task Description")
 
-    st.write("Table using st.table():")
-    st.table(df)
+        reminder = st.time_input("Reminder Time", value=None)
 
-    st.json({
-        "name": "Kent",
-        "course": "ICS",
-        "year": 2
-    })
+        important = st.checkbox("Mark as Important")
 
-# ---------------- CHARTS ----------------
-elif menu == "Charts":
-    st.header("Charts")
+        submitted = st.form_submit_button("Add Task")
 
-    chart_data = pd.DataFrame(
-        np.random.randn(20, 3),
-        columns=["A", "B", "C"]
+    if submitted:
+        task = {
+            "Task": task_name,
+            "Priority": priority,
+            "Category": category,
+            "Deadline": deadline,
+            "Important": important
+        }
+
+        st.session_state.tasks.append(task)
+
+        st.success("Task added successfully!")
+ 
+elif menu == "Dashboard":
+
+    st.title("Dashboard")
+
+    if st.session_state.tasks:
+
+        st.subheader("Your Tasks")
+
+        col1, col2, col3, col4 = st.columns([4,2,2,1])
+        with col1:
+            st.markdown("**Task**")
+        with col2:
+            st.markdown("**Priority**")
+        with col3:
+            st.markdown("**Deadline**")
+        with col4:
+            st.markdown("**Status**")
+
+        st.divider()
+
+        for i, task in enumerate(st.session_state.tasks):
+
+            col1, col2, col3, col4 = st.columns([4,2,2,1])
+
+            with col1:
+                completed = st.checkbox(
+                    task["Task"],
+                    key=f"task_{i}"
+                )
+
+            with col2:
+                st.write(task["Priority"])
+
+            with col3:
+                st.write(task["Deadline"])
+
+            with col4:
+                if completed:
+                    st.success("Done")
+
+        df = pd.DataFrame(st.session_state.tasks)
+
+        st.divider()
+
+        st.subheader("Task Distribution by Category")
+        st.bar_chart(df["Category"].value_counts())
+
+        st.divider()
+
+        st.subheader("Priority Distribution")
+        st.area_chart(df["Priority"].value_counts())
+
+        completed_count = sum(
+            st.session_state.get(f"task_{i}", False)
+            for i in range(len(st.session_state.tasks))
+        )
+
+        progress = completed_count / len(st.session_state.tasks)
+
+        st.subheader("Completion Progress")
+        st.progress(progress)
+
+    else:
+        st.warning("No tasks added yet.")
+
+elif menu == "Feedback":
+    st.title("Send us your Feedback")
+
+    rating = st.slider("Rate the app (10 being the highest and 1 being the lowest.)", 1, 10)
+    
+    recommendation = st.radio(
+        "Would you recommend this app?",
+        ["Yes", "Maybe", "No"]
     )
 
-    st.line_chart(chart_data)
-    st.bar_chart(chart_data)
-    st.area_chart(chart_data)
+    comments = st.text_area("Additional comments")
 
-# ---------------- ABOUT ----------------
+    if st.button("Submit Feedback"):
+        st.success("Thank you for your feedback!")
+
+
 elif menu == "About":
-    st.title("About")
-    st.write("""
-    This application demonstrates various Streamlit elements using:
-    https://docs.streamlit.io/develop/api-reference
+    st.title("About This App")
 
-    Sidebar Panels:
-    1. Home  
-    2. Text & Markdown  
-    3. Inputs  
-    4. Buttons  
-    5. Data Display  
-    6. Charts  
-    7. About  
+    st.markdown("""
+    ### What the App Does
+    Jas Do It is a simple to-do application aims to help users organize 
+    daily activities by creating, prioritizing, and tracking tasks.
 
-    Created for learning Streamlit components.
+   It allows users to add tasks, set deadlines, prioritize activities, 
+   and monitor productivity through a dashboard.
+
+    ### Target Users
+    - Students
+    - Professionals
+    - Anyone who wants to manage their tasks effectively.
+
+    ### Inputs Collected
+    - Task name
+    - Priority level
+    - Category
+    - Deadline
+    - Task description
+    - Reminder time
+    - Importance flag
+    - User feedback
+
+    ### Outputs Displayed
+    - Task tables
+    - Category and priority charts
+    - Progress indicators
+    - Task completion messages
+    - Feedback responses
+
+    ### Created By
+    Kent Mondero  
+    ICS-01-401A  
     """)
